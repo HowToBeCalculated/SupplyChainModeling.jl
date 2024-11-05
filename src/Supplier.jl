@@ -1,27 +1,33 @@
 """
-A supplier.
+    Supplier(name::String, location::Union{Location, Missing}=missing)
+
+Represents a supplier with a name and an optional location.
+
+# Fields
+- `name::String`: The name of the supplier. Used as a unique identifier.
+- `location::Union{Location, Missing}`: The geographical location of the supplier. If unspecified, it defaults to `missing`.
+- `unit_cost::Dict{Product, Float64}`: The cost per unit of the product from this supplier.
+- `maximum_throughput::Dict{Product, Float64}`: The maximum number of units that can be provided in each time period.
+
+# Constructors
+- `Supplier(name::String, location::Union{Location, Missing})`: Creates a `Supplier` with a specified name and location.
+- `Supplier(name::String)`: Creates a `Supplier` with a specified name and a `missing` location.
+
+# Examples
+```julia-repl
+julia> supplier1 = Supplier("Acme", Location(40.7128, -74.0060))
+julia> supplier2 = Supplier("Bobs")
+```
 """
 struct Supplier <: Node
     name::String
-
-    unit_cost::Dict{Product, Float64}
-
-    maximum_throughput::Dict{Product, Float64}
-
     location::Union{Location, Missing}
 
-    """
-    Creates a new supplier.
-    """
-    function Supplier(name::String, location::Location)
-        return new(name, Dict{Product, Float64}(), Dict{Product, Float64}(), location)
-    end
+    unit_cost::Dict{Product, Float64}
+    maximum_throughput::Dict{Product, Float64}
 
-    """
-    Creates a new supplier.
-    """
-    function Supplier(name::String)
-        return new(name, Dict{Product, Float64}(), Dict{Product, Float64}(), missing)
+    function Supplier(name::String, location::Union{Location, Missing}=missing)
+        return new(name, location, Dict{Product, Float64}(), Dict{Product, Float64}())
     end
 end
 
@@ -30,16 +36,17 @@ Base.hash(x::Supplier, h::UInt64) = hash(x.name, h)
 Base.show(io::IO, x::Supplier) = print(io, x.name)
 
 """
-    add_product!(supplier::Supplier, product::Product; unit_cost::Float64, maximum_throughput::Float64)
+    add_product!(supplier::Supplier, product::Product; unit_cost::Real, maximum_throughput::Real=Inf)
 
 Indicates that a supplier can provide a product.
 
-The keyword arguments are:
- - `unit_cost`: the cost per unit of the product from this supplier.
- - `maximum_throughput`: the maximum number of units that can be provided in each time period.
-
+# Arguments
+- `supplier::Supplier`: The supplier that can provide the product.
+- `product::Product`: The product that the supplier can provide.
+- `unit_cost::Real`: The cost per unit of the product from this supplier.
+- `maximum_throughput::Real`: The maximum number of units that can be provided in each time period. Defaults to `Inf`.
 """
-function add_product!(supplier::Supplier, product; unit_cost::Real, maximum_throughput::Real=Inf)
+function add_product!(supplier::Supplier, product::Product; unit_cost::Real, maximum_throughput::Real=Inf)
     supplier.unit_cost[product] = unit_cost
     supplier.maximum_throughput[product] = maximum_throughput
 end

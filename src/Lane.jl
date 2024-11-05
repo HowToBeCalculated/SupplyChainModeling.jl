@@ -1,8 +1,5 @@
-
-const zero1 = [0]
-
 """
-A transportation lane between two or more nodes of the supply chain.
+    Lane(origin::Node, destination::Node; id::Union{Missing, String}=missing, fixed_cost::Float64=0.0, unit_cost::Float64=0.0, minimum_quantity::Float64=0.0, time::Int=0, initial_arrivals::Union{Nothing, Dict{Product, Array{Int, 1}}}=nothing, can_ship::Union{Nothing, Array{Bool, 1}}=nothing)
 """
 struct Lane <: Transport
     id::Union{Missing, String}
@@ -15,40 +12,52 @@ struct Lane <: Transport
     initial_arrivals::Union{Nothing, Dict{Product, Array{Array{Int64, 1}, 1}}} # for each time, for each destination the amount arriving
     can_ship::Union{Nothing, Array{Bool, 1}}
 
-    function Lane(origin, destination::Node; id::Union{Missing, String}=missing,
-                                             fixed_cost=0.0, 
-                                             unit_cost=0.0, 
-                                             minimum_quantity=0.0, 
-                                             time::Int=0, 
-                                             initial_arrivals=nothing::Union{Nothing, Dict{Product, Array{Int, 1}}}, 
-                                             can_ship=nothing::Union{Nothing, Array{Bool, 1}})
-        return new(id,
-                   origin, 
-                   [destination], 
-                   fixed_cost, 
-                   unit_cost, 
-                   minimum_quantity, 
-                   (time == 0) ? zero1 : [time], 
-                   isnothing(initial_arrivals) ? initial_arrivals : Dict([p => [[ia[t]] for t in eachindex(ia)] for (p, ia) in initial_arrivals]), 
-                   can_ship)
+    function Lane(
+        origin::Node,
+        destination::Node;
+        id::Union{Missing, String}=missing,
+        fixed_cost::Float64=0.0, 
+        unit_cost::Float64=0.0, 
+        minimum_quantity::Float64=0.0,
+        time::Int=0, 
+        initial_arrivals::Union{Nothing, Dict{Product, Array{Int, 1}}}=nothing, 
+        can_ship::Union{Nothing, Array{Bool, 1}}=nothing
+    )
+        return new(
+            id,
+            origin, 
+            [destination], 
+            fixed_cost, 
+            unit_cost, 
+            minimum_quantity, 
+            (time == 0) ? [0] : [time], 
+            isnothing(initial_arrivals) ? initial_arrivals : Dict([p => [[ia[t]] for t in eachindex(ia)] for (p, ia) in initial_arrivals]), 
+            can_ship
+        )
     end
 
-    function Lane(origin, destinations::Array{N, 1}; id::Union{Missing, String}=missing,
-                                                     fixed_cost=0.0, 
-                                                     unit_cost=0.0, 
-                                                     minimum_quantity=0.0, 
-                                                     times=nothing::Union{Nothing, Array{Int, 1}}, 
-                                                     initial_arrivals=nothing::Union{Nothing, Dict{Product, Array{Array{Int, 1}, 1}}}, 
-                                                     can_ship=nothing::Union{Nothing, Array{Bool, 1}}) where N <: Node
-        return new(id,
-                   origin, 
-                   destinations, 
-                   fixed_cost, 
-                   unit_cost, 
-                   minimum_quantity, 
-                   isnothing(times) ? zeros(Int, length(destinations)) : times, 
-                   initial_arrivals, 
-                   can_ship)
+    function Lane(
+        origin,
+        destinations::Array{N, 1};
+        id::Union{Missing, String}=missing,
+        fixed_cost=0.0, 
+        unit_cost=0.0, 
+        minimum_quantity=0.0, 
+        times::Union{Nothing, Array{Int, 1}}=nothing, 
+        initial_arrivals::Union{Nothing, Dict{Product, Array{Array{Int, 1}, 1}}}=nothing, 
+        can_ship::Union{Nothing, Array{Bool, 1}}=nothing
+    ) where N <: Node
+        return new(
+            id,
+            origin, 
+            destinations, 
+            fixed_cost, 
+            unit_cost, 
+            minimum_quantity, 
+            isnothing(times) ? zeros(Int, length(destinations)) : times, 
+            initial_arrivals, 
+            can_ship
+        )
     end
 end
 
@@ -77,7 +86,7 @@ Base.show(io::IO, x::Lane) = print(io, "$(x.origin) $(x.destinations)")
 
 Gets the destinations of a lane.
 """
-function get_destinations(lane::Lane)
+function get_destinations(lane::Lane)::Array{<: Node, 1}
     return lane.destinations
 end
 
@@ -90,7 +99,7 @@ function is_destination(location, lane::Lane)::Bool
     return location ∈ get_destinations(lane)
 end
 
-function get_leadtime(lane::Lane, destination::Int64)
+function get_leadtime(lane::Lane, destination::Int64)::Int
     return lane.times[destination]
 end
 
@@ -99,7 +108,7 @@ end
 
 Gets the lead time to reach a destination using a lane.
 """
-function get_leadtime(lane::Lane, destination::Node)
+function get_leadtime(lane::Lane, destination::Node)::Int
     return lane.times[findfirst(d -> d == destination, lane.destinations)]
 end
 
@@ -108,7 +117,7 @@ end
 
 Gets the fixed cost of using a lane.
 """
-function get_fixed_cost(lane::Lane)
+function get_fixed_cost(lane::Lane)::Float64
     return lane.fixed_cost
 end
 
@@ -117,7 +126,7 @@ end
 
 Gets the known inventory arrivals on a lane for a given time.
 """
-function get_arrivals(product::Product, lane::Lane, destination, time::Int)
+function get_arrivals(product::Product, lane::Lane, destination, time::Int)::Int
     index = findfirst(d -> d == destination, lane.destinations)
     if isnothing(lane.initial_arrivals) || !haskey(lane.initial_arrivals, product) || isnothing(index)
         return 0
@@ -131,6 +140,6 @@ end
 
 Checks if inventory can be send on a lane at a given time.
 """
-function can_ship(lane::Lane, time::Int)
+function can_ship(lane::Lane, time::Int)::Bool
     return isnothing(lane.can_ship) || isempty(lane.can_ship) || lane.can_ship[time]
 end
